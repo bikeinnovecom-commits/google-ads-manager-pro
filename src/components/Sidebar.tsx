@@ -1,32 +1,47 @@
+import toast from 'react-hot-toast'
+import { supabase } from '../lib/supabase'
+
 interface SidebarProps {
   currentView: string
-  setCurrentView: (view: string) => void
+  setCurrentView: (view: any) => void
 }
 
 export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'campaigns', label: 'Campagnes', icon: '🎯' },
+    { id: 'images', label: 'Images', icon: '🖼️' },
+    { id: 'pages', label: 'Pages', icon: '📄' },
+    { id: 'collections', label: 'Collections', icon: '📁' },
+    { id: 'blog', label: 'Blog', icon: '✍️' },
+  ]
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    toast.success('Déconnexion réussie')
+  }
+
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        <div className="logo-icon">G</div>
-        <div className="logo-text">Google Ads <span>Pro</span></div>
+      <div className="sidebar-header">
+        <h1>🎯 Google Ads Pro</h1>
       </div>
-      
-      <div className="nav-section">
-        <div className="nav-title">Google Ads</div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`} onClick={() => setCurrentView('dashboard')}>📊 Dashboard</button>
-          <button className={`nav-item ${currentView === 'campaigns' ? 'active' : ''}`} onClick={() => setCurrentView('campaigns')}>📈 Campagnes</button>
-        </nav>
-      </div>
-
-      <div className="nav-section">
-        <div className="nav-title">Shopify</div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${currentView === 'images' ? 'active' : ''}`} onClick={() => setCurrentView('images')}>📸 Images</button>
-          <button className={`nav-item ${currentView === 'pages' ? 'active' : ''}`} onClick={() => setCurrentView('pages')}>📄 Pages</button>
-          <button className={`nav-item ${currentView === 'collections' ? 'active' : ''}`} onClick={() => setCurrentView('collections')}>🗂️ Collections</button>
-          <button className={`nav-item ${currentView === 'blog' ? 'active' : ''}`} onClick={() => setCurrentView('blog')}>✍️ Blog</button>
-        </nav>
+      <nav className="sidebar-nav">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            className={`nav-item ${currentView === item.id ? 'active' : ''}`}
+            onClick={() => setCurrentView(item.id)}
+          >
+            <span className="nav-icon">{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      <div className="sidebar-footer">
+        <button className="logout-btn" onClick={handleLogout}>
+          🚪 Déconnexion
+        </button>
       </div>
     </aside>
   )

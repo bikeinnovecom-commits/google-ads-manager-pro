@@ -49,7 +49,7 @@ export default function Blog() {
       updated[index] = { ...updated[index], seo: 'good' }
       setArticles(updated)
       
-      toast.success(`✅ Article "${article.title}" optimisé !`)
+      toast.success('Article "' + article.title + '" optimisé !')
     } catch (error) {
       toast.error('Erreur lors de la correction')
     }
@@ -58,5 +58,33 @@ export default function Blog() {
   return (
     <div className="page">
       <h1>Blog</h1>
-      <p className="subtitle">Gérez
-
+      <p className="subtitle">Gérez vos articles de blog</p>
+      <div className="stats-row">
+        <div className="stat-box">4 articles</div>
+        <div className="stat-box warning">{articles.filter(a => a.seo !== 'good').length} à optimiser</div>
+      </div>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr><th>Titre</th><th>Date</th><th>SEO</th><th>Statut</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {articles.map((article, i) => (
+              <tr key={i}>
+                <td>{article.title}</td>
+                <td>{article.date}</td>
+                <td className={article.seo === 'good' ? 'text-good' : 'text-warning'}>{article.seo}</td>
+                <td>{article.status}</td>
+                <td>
+                  {article.seo !== 'good' && (
+                    <button className="btn-fix" onClick={() => handleFix(i)}>Corriger</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

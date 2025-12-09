@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
+import { supabase } from './lib/supabase'
 import './App.css'
+import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
 import Campaigns from './components/Campaigns'
 import Images from './components/Images'
@@ -13,6 +15,34 @@ type View = 'dashboard' | 'campaigns' | 'images' | 'pages' | 'collections' | 'bl
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
+  const [session, setSession] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return <div className="loading">Chargement...</div>
+  }
+
+  if (!session) {
+    return (
+      <>
+        <Toaster position="top-right" />
+        <Auth onLogin={() => {}} />
+      </>
+    )
+  }
 
   return (
     <div className="app">
