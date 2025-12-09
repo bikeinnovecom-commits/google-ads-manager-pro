@@ -1,44 +1,78 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function Blog() {
-  const [posts, setPosts] = useState([
-    { title: 'Guide skincare', date: '2024-01-15', views: 1250, seo: 92 },
-    { title: 'Tendances mode', date: '2024-01-10', views: 890, seo: 78 },
-    { title: 'Choisir sa taille', date: '2024-01-05', views: 2100, seo: 65 },
-    { title: 'Engagements eco', date: '2023-12-20', views: 450, seo: 88 },
+  const [articles, setArticles] = useState([
+    { title: 'Guide vélo électrique 2024', date: '2024-01-15', seo: 'good', status: 'Publié' },
+    { title: 'Entretien batterie', date: '2024-02-20', seo: 'warning', status: 'Publié' },
+    { title: 'Comparatif moteurs', date: '2024-03-10', seo: 'bad', status: 'Brouillon' },
+    { title: 'Sécurité à vélo', date: '2024-03-25', seo: 'good', status: 'Publié' },
   ])
 
-  const handleFix = (index: number) => {
-    const updated = [...posts]
-    updated[index] = { ...updated[index], seo: 95 }
-    setPosts(updated)
+  useEffect(() => {
+    loadCorrections()
+  }, [])
+
+  const loadCorrections = async () => {
+    const { data } = await supabase
+      .from('shopify_corrections')
+      .select('*')
+      .eq('item_type', 'blog')
+    
+    if (data && data.length > 0) {
+      setArticles(prev => prev.map(article => {
+        const correction = data.find(c => c.item_name === article.title)
+        if (correction) {
+          return { ...article, seo: 'good' }
+        }
+        return article
+      }))
+    }
   }
 
-  const totalViews = posts.reduce((a, b) => a + b.views, 0)
-  const avgSeo = Math.round(posts.reduce((a, b) => a + b.seo, 0) / posts.length)
+  const handleFix = async (index: number) => {
+    const article = articles[index]
+    
+    await supabase.from('shopify_corrections').insert({
+      item_type: 'blog',
+      item_id: String(index),
+      item_name: article.title,
+      field: 'seo',
+      original_value: article.seo,
+      corrected_value: 'good',
+      status: 'corrected'
+    })
+
+    const updated = [...articles]
+    updated[index] = { ...updated[index], seo: 'good' }
+    setArticles(updated)
+  }
 
   return (
     <div className="page">
       <h1>Blog</h1>
-      <p className="subtitle">Gerez vos articles</p>
+      <p className="subtitle">Gérez vos articles de blog</p>
       <div className="stats-row">
         <div className="stat-box">4 articles</div>
-        <div className="stat-box">{totalViews} vues</div>
-        <div className="stat-box">SEO: {avgSeo}%</div>
+        <div className="stat-box warning">{articles.filter(a => a.seo !== 'good').length} à optimiser</div>
       </div>
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>Article</th><th>Date</th><th>Vues</th><th>SEO</th><th>Action</th></tr>
+            <tr><th>Titre</th><th>Date</th><th>SEO</th><th>Statut</th><th>Action</th></tr>
           </thead>
           <tbody>
-            {posts.map((p, i) => (
+            {articles.map((article, i) => (
               <tr key={i}>
-                <td>{p.title}</td>
-                <td>{p.date}</td>
-                <td>{p.views}</td>
-                <td className={p.seo >= 80 ? 'text-good' : 'text-warning'}>{p.seo}%</td>
-                <td>{p.seo < 80 && <button className="btn-fix" onClick={() => handleFix(i)}>Corriger</button>}</td>
+                <td>{article.title}</td>
+                <td>{article.date}</td>
+                <td className={article.seo === 'good' ? 'text-good' : 'text-warning'}>{article.seo}</td>
+                <td>{article.status}</td>
+                <td>
+                  {article.seo !== 'good' && (
+                    <button className="btn-fix" onClick={() => handleFix(i)}>Corriger</button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
