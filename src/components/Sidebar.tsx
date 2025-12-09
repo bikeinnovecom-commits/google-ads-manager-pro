@@ -10,6 +10,7 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'campaigns', label: 'Campagnes', icon: '🎯' },
+    { id: 'seo', label: 'SEO Analyzer', icon: '🕷️' },
     { id: 'images', label: 'Images', icon: '🖼️' },
     { id: 'pages', label: 'Pages', icon: '📄' },
     { id: 'collections', label: 'Collections', icon: '📁' },
