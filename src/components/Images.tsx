@@ -1,17 +1,54 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function Images() {
   const [images, setImages] = useState([
     { name: 'hero-banner.jpg', size: '2.4 MB', status: 'warning', suggestion: 'Compresser' },
     { name: 'product-1.png', size: '890 KB', status: 'warning', suggestion: 'Convertir en WebP' },
-    { name: 'product-2.webp', size: '120 KB', status: 'good', suggestion: 'Optimise' },
+    { name: 'product-2.webp', size: '120 KB', status: 'good', suggestion: 'Optimisé' },
     { name: 'collection-bg.jpg', size: '3.1 MB', status: 'bad', suggestion: 'Trop lourd' },
-    { name: 'logo.svg', size: '12 KB', status: 'good', suggestion: 'Optimise' },
+    { name: 'logo.svg', size: '12 KB', status: 'good', suggestion: 'Optimisé' },
   ])
 
-  const handleFix = (index: number) => {
+  // Charger les corrections depuis Supabase au démarrage
+  useEffect(() => {
+    loadCorrections()
+  }, [])
+
+  const loadCorrections = async () => {
+    const { data } = await supabase
+      .from('shopify_corrections')
+      .select('*')
+      .eq('item_type', 'image')
+    
+    if (data && data.length > 0) {
+      setImages(prev => prev.map(img => {
+        const correction = data.find(c => c.item_name === img.name)
+        if (correction) {
+          return { ...img, status: 'good', suggestion: 'Corrigé' }
+        }
+        return img
+      }))
+    }
+  }
+
+  const handleFix = async (index: number) => {
+    const img = images[index]
+    
+    // Sauvegarder dans Supabase
+    await supabase.from('shopify_corrections').insert({
+      item_type: 'image',
+      item_id: String(index),
+      item_name: img.name,
+      field: 'optimization',
+      original_value: img.status,
+      corrected_value: 'good',
+      status: 'corrected'
+    })
+
+    // Mettre à jour le state local
     const updated = [...images]
-    updated[index] = { ...updated[index], status: 'good', suggestion: 'Corrige!', size: '150 KB' }
+    updated[index] = { ...updated[index], status: 'good', suggestion: 'Corrigé' }
     setImages(updated)
   }
 
@@ -22,7 +59,7 @@ export default function Images() {
       <div className="stats-row">
         <div className="stat-box">5 images</div>
         <div className="stat-box">8.2 MB total</div>
-        <div className="stat-box warning">{images.filter(i => i.status !== 'good').length} a optimiser</div>
+        <div className="stat-box warning">{images.filter(i => i.status !== 'good').length} à optimiser</div>
       </div>
       <div className="table-container">
         <table>

@@ -1,44 +1,78 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function Pages() {
   const [pages, setPages] = useState([
-    { name: 'Accueil', seo: 85, title: 'OK', desc: 'OK', speed: 'Rapide' },
-    { name: 'A propos', seo: 45, title: 'Manquant', desc: 'Trop court', speed: 'Moyen' },
-    { name: 'Contact', seo: 70, title: 'OK', desc: 'OK', speed: 'Lent' },
-    { name: 'FAQ', seo: 90, title: 'OK', desc: 'OK', speed: 'Rapide' },
+    { name: 'À propos', url: '/about', seo: 'warning', desc: 'Manque meta description' },
+    { name: 'Contact', url: '/contact', seo: 'good', desc: 'OK' },
+    { name: 'FAQ', url: '/faq', seo: 'bad', desc: 'Titre trop long' },
+    { name: 'Livraison', url: '/shipping', seo: 'good', desc: 'OK' },
   ])
 
-  const handleFix = (index: number) => {
-    const updated = [...pages]
-    updated[index] = { ...updated[index], seo: 95, title: 'OK', desc: 'OK', speed: 'Rapide' }
-    setPages(updated)
+  useEffect(() => {
+    loadCorrections()
+  }, [])
+
+  const loadCorrections = async () => {
+    const { data } = await supabase
+      .from('shopify_corrections')
+      .select('*')
+      .eq('item_type', 'page')
+    
+    if (data && data.length > 0) {
+      setPages(prev => prev.map(page => {
+        const correction = data.find(c => c.item_name === page.name)
+        if (correction) {
+          return { ...page, seo: 'good', desc: 'Corrigé' }
+        }
+        return page
+      }))
+    }
   }
 
-  const avgSeo = Math.round(pages.reduce((a, b) => a + b.seo, 0) / pages.length)
+  const handleFix = async (index: number) => {
+    const page = pages[index]
+    
+    await supabase.from('shopify_corrections').insert({
+      item_type: 'page',
+      item_id: String(index),
+      item_name: page.name,
+      field: 'seo',
+      original_value: page.seo,
+      corrected_value: 'good',
+      status: 'corrected'
+    })
+
+    const updated = [...pages]
+    updated[index] = { ...updated[index], seo: 'good', desc: 'Corrigé' }
+    setPages(updated)
+  }
 
   return (
     <div className="page">
       <h1>Pages</h1>
-      <p className="subtitle">Optimisez le SEO</p>
+      <p className="subtitle">Optimisez le SEO de vos pages</p>
       <div className="stats-row">
         <div className="stat-box">4 pages</div>
-        <div className="stat-box">SEO: {avgSeo}%</div>
-        <div className="stat-box warning">{pages.filter(p => p.seo < 80).length} a ameliorer</div>
+        <div className="stat-box warning">{pages.filter(p => p.seo !== 'good').length} à optimiser</div>
       </div>
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>Page</th><th>SEO</th><th>Titre</th><th>Desc</th><th>Vitesse</th><th>Action</th></tr>
+            <tr><th>Page</th><th>URL</th><th>SEO</th><th>Description</th><th>Action</th></tr>
           </thead>
           <tbody>
-            {pages.map((p, i) => (
+            {pages.map((page, i) => (
               <tr key={i}>
-                <td>{p.name}</td>
-                <td className={p.seo >= 80 ? 'text-good' : 'text-warning'}>{p.seo}%</td>
-                <td>{p.title}</td>
-                <td>{p.desc}</td>
-                <td>{p.speed}</td>
-                <td>{p.seo < 80 && <button className="btn-fix" onClick={() => handleFix(i)}>Corriger</button>}</td>
+                <td>{page.name}</td>
+                <td>{page.url}</td>
+                <td className={page.seo === 'good' ? 'text-good' : 'text-warning'}>{page.seo}</td>
+                <td>{page.desc}</td>
+                <td>
+                  {page.seo !== 'good' && (
+                    <button className="btn-fix" onClick={() => handleFix(i)}>Corriger</button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
