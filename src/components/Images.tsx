@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
 export default function Images() {
@@ -10,7 +11,6 @@ export default function Images() {
     { name: 'logo.svg', size: '12 KB', status: 'good', suggestion: 'Optimisé' },
   ])
 
-  // Charger les corrections depuis Supabase au démarrage
   useEffect(() => {
     loadCorrections()
   }, [])
@@ -35,21 +35,25 @@ export default function Images() {
   const handleFix = async (index: number) => {
     const img = images[index]
     
-    // Sauvegarder dans Supabase
-    await supabase.from('shopify_corrections').insert({
-      item_type: 'image',
-      item_id: String(index),
-      item_name: img.name,
-      field: 'optimization',
-      original_value: img.status,
-      corrected_value: 'good',
-      status: 'corrected'
-    })
+    try {
+      await supabase.from('shopify_corrections').insert({
+        item_type: 'image',
+        item_id: String(index),
+        item_name: img.name,
+        field: 'optimization',
+        original_value: img.status,
+        corrected_value: 'good',
+        status: 'corrected'
+      })
 
-    // Mettre à jour le state local
-    const updated = [...images]
-    updated[index] = { ...updated[index], status: 'good', suggestion: 'Corrigé' }
-    setImages(updated)
+      const updated = [...images]
+      updated[index] = { ...updated[index], status: 'good', suggestion: 'Corrigé' }
+      setImages(updated)
+      
+      toast.success(`✅ Image "${img.name}" optimisée !`)
+    } catch (error) {
+      toast.error('Erreur lors de la correction')
+    }
   }
 
   return (

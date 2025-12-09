@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
 export default function Collections() {
@@ -33,19 +34,25 @@ export default function Collections() {
   const handleFix = async (index: number) => {
     const col = collections[index]
     
-    await supabase.from('shopify_corrections').insert({
-      item_type: 'collection',
-      item_id: String(index),
-      item_name: col.name,
-      field: 'seo',
-      original_value: col.seo,
-      corrected_value: 'good',
-      status: 'corrected'
-    })
+    try {
+      await supabase.from('shopify_corrections').insert({
+        item_type: 'collection',
+        item_id: String(index),
+        item_name: col.name,
+        field: 'seo',
+        original_value: col.seo,
+        corrected_value: 'good',
+        status: 'corrected'
+      })
 
-    const updated = [...collections]
-    updated[index] = { ...updated[index], seo: 'good', desc: 'OK', image: 'OK' }
-    setCollections(updated)
+      const updated = [...collections]
+      updated[index] = { ...updated[index], seo: 'good', desc: 'OK', image: 'OK' }
+      setCollections(updated)
+      
+      toast.success(`✅ Collection "${col.name}" optimisée !`)
+    } catch (error) {
+      toast.error('Erreur lors de la correction')
+    }
   }
 
   return (
