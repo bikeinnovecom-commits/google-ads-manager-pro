@@ -5,13 +5,14 @@ import './App.css'
 import Auth from './components/Auth'
 import Dashboard from './components/Dashboard'
 import Campaigns from './components/Campaigns'
+import SEO from './components/SEO'
 import Images from './components/Images'
 import Pages from './components/Pages'
 import Collections from './components/Collections'
 import Blog from './components/Blog'
 import Sidebar from './components/Sidebar'
 
-type View = 'dashboard' | 'campaigns' | 'images' | 'pages' | 'collections' | 'blog'
+type View = 'dashboard' | 'campaigns' | 'seo' | 'images' | 'pages' | 'collections' | 'blog'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
@@ -54,6 +55,7 @@ function App() {
       <main className="main-content">
         {currentView === 'dashboard' && <Dashboard />}
         {currentView === 'campaigns' && <Campaigns />}
+        {currentView === 'seo' && <SEO />}
         {currentView === 'images' && <Images />}
         {currentView === 'pages' && <Pages />}
         {currentView === 'collections' && <Collections />}
