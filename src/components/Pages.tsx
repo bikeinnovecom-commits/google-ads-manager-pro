@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
 export default function Pages() {
@@ -33,19 +34,25 @@ export default function Pages() {
   const handleFix = async (index: number) => {
     const page = pages[index]
     
-    await supabase.from('shopify_corrections').insert({
-      item_type: 'page',
-      item_id: String(index),
-      item_name: page.name,
-      field: 'seo',
-      original_value: page.seo,
-      corrected_value: 'good',
-      status: 'corrected'
-    })
+    try {
+      await supabase.from('shopify_corrections').insert({
+        item_type: 'page',
+        item_id: String(index),
+        item_name: page.name,
+        field: 'seo',
+        original_value: page.seo,
+        corrected_value: 'good',
+        status: 'corrected'
+      })
 
-    const updated = [...pages]
-    updated[index] = { ...updated[index], seo: 'good', desc: 'Corrigé' }
-    setPages(updated)
+      const updated = [...pages]
+      updated[index] = { ...updated[index], seo: 'good', desc: 'Corrigé' }
+      setPages(updated)
+      
+      toast.success(`✅ Page "${page.name}" optimisée !`)
+    } catch (error) {
+      toast.error('Erreur lors de la correction')
+    }
   }
 
   return (

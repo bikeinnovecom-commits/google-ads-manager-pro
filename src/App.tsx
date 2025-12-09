@@ -1,18 +1,25 @@
 import { useState } from 'react'
+import { Toaster } from 'react-hot-toast'
 import './App.css'
 import Dashboard from './components/Dashboard'
 import Campaigns from './components/Campaigns'
-import Sidebar from './components/Sidebar'
 import Images from './components/Images'
 import Pages from './components/Pages'
 import Collections from './components/Collections'
 import Blog from './components/Blog'
+import Sidebar from './components/Sidebar'
+
+type View = 'dashboard' | 'campaigns' | 'images' | 'pages' | 'collections' | 'blog'
 
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard')
+  const [currentView, setCurrentView] = useState<View>('dashboard')
 
   return (
     <div className="app">
+      <Toaster position="top-right" toastOptions={{
+        success: { duration: 3000, style: { background: '#10b981', color: '#fff' } },
+        error: { duration: 4000, style: { background: '#ef4444', color: '#fff' } },
+      }} />
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
       <main className="main-content">
         {currentView === 'dashboard' && <Dashboard />}
