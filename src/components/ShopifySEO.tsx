@@ -217,12 +217,12 @@ export default function ShopifySEO() {
       total: all.length,
       optimized: all.filter(i => i.score >= 80).length,
       toOptimize: all.filter(i => i.score < 80).length,
-      avgScore: Math.round(all.reduce((a, b) => a + b.score, 0) / all.length)
+      avgScore: Math.round(all.reduce((a: any, b: any) => a + b.score, 0) / all.length)
     }
   }
 
   const handleOptimize = (item: SEOItem) => {
-    setEditingItem(item)
+    setEditingItem(item: any)
   }
 
   const handleSave = () => {
@@ -402,7 +402,7 @@ export default function ShopifySEO() {
                   {item.focusKeyword || <span className="no-keyword">Nicht definiert</span>}
                 </td>
                 <td>
-                  <button className="edit-btn" onClick={() => handleOptimize(item)}>
+                  <button className="edit-btn" onClick={() => handleOptimize(item: any)}>
                     ✏️ Bearbeiten
                   </button>
                 </td>
