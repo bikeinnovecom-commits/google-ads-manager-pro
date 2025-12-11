@@ -181,12 +181,12 @@ export default function ShopifySEO() {
   const [filter, setFilter] = useState<'all' | 'optimized' | 'to-optimize'>('all')
   const [editingItem, setEditingItem] = useState<SEOItem | null>(null)
   const [isOptimizing, setIsOptimizing] = useState(false)
-  const [items, setItems] = useState({
-    products: mockProducts,
-    collections: mockCollections,
-    pages: mockPages,
-    blogs: mockBlogs
-  })
+  const [items, setItems] = useState(() => { const savedProducts = localStorage.getItem('seo_products'); const savedCollections = localStorage.getItem('seo_collections'); const savedPages = localStorage.getItem('seo_pages'); const savedBlogs = localStorage.getItem('seo_blogs'); return {
+    products: savedProducts ? JSON.parse(savedProducts) : mockProducts,
+    collections: savedCollections ? JSON.parse(savedCollections) : mockCollections,
+    pages: savedPages ? JSON.parse(savedPages) : mockPages,
+    blogs: savedBlogs ? JSON.parse(savedBlogs) : mockBlogs
+  }})
 
   const getCurrentItems = () => {
     let data = items[activeTab]

@@ -1,18 +1,40 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import './SEO.css'
 
-interface CrawlResult {
+interface PageSpeedResult {
   url: string
+  score: number
+  performanceScore: number
+  seoScore: number
+  accessibilityScore: number
+  bestPracticesScore: number
+  fcp: string // First Contentful Paint
+  lcp: string // Largest Contentful Paint
+  cls: string // Cumulative Layout Shift
+  tbt: string // Total Blocking Time
+  speedIndex: string
+  issues: SEOIssue[]
+  opportunities: Opportunity[]
+  diagnostics: Diagnostic[]
+  timestamp: Date
+}
+
+interface SEOIssue {
   title: string
   description: string
-  h1: string[]
-  h2: string[]
-  wordCount: number
-  imageCount: number
-  linkCount: number
-  score: number
-  issues: string[]
-  crawledAt: string
+  severity: 'high' | 'medium' | 'low'
+}
+
+interface Opportunity {
+  title: string
+  description: string
+  savings: string
+}
+
+interface Diagnostic {
+  title: string
+  description: string
+  displayValue?: string
 }
 
 interface Keyword {
@@ -20,15 +42,13 @@ interface Keyword {
   volume: number
   difficulty: number
   cpc: number
-  trend: number[]
 }
 
-export default function SEO() {
-  const [activeTab, setActiveTab] = useState<'crawler' | 'keywords' | 'backlinks' | 'audit'>('crawler')
+export default function SEOAnalyzer() {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<CrawlResult[]>(() => {
-    const saved = localStorage.getItem('seo_crawls')
+  const [results, setResults] = useState<PageSpeedResult[]>(() => {
+    const saved = localStorage.getItem('pagespeed_results')
     return saved ? JSON.parse(saved) : []
   })
   const [keywords, setKeywords] = useState<Keyword[]>(() => {
@@ -36,396 +56,484 @@ export default function SEO() {
     return saved ? JSON.parse(saved) : []
   })
   const [keywordInput, setKeywordInput] = useState('')
+  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'seo' | 'opportunities'>('overview')
+  const [strategy, setStrategy] = useState<'mobile' | 'desktop'>('mobile')
+  const [error, setError] = useState<string | null>(null)
 
-  const crawlUrl = async () => {
+  const analyzeUrl = async () => {
     if (!url) return
-    setLoading(true)
     
+    // Valider l'URL
+    let validUrl = url
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      validUrl = 'https://' + url
+    }
+
+    setLoading(true)
+    setError(null)
+
     try {
-      // Simulation du crawl (dans une vraie app, ça serait un backend)
-      await new Promise(r => setTimeout(r, 2000))
+      // Appel à l'API Google PageSpeed Insights (GRATUIT!)
+      const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(validUrl)}&strategy=${strategy}&category=performance&category=seo&category=accessibility&category=best-practices`
       
-      const mockResult: CrawlResult = {
-        url,
-        title: `Page - ${new URL(url).hostname}`,
-        description: 'Meta description de la page analysée',
-        h1: ['Titre principal de la page'],
-        h2: ['Sous-titre 1', 'Sous-titre 2', 'Sous-titre 3'],
-        wordCount: Math.floor(Math.random() * 2000) + 500,
-        imageCount: Math.floor(Math.random() * 20) + 5,
-        linkCount: Math.floor(Math.random() * 50) + 10,
-        score: Math.floor(Math.random() * 30) + 70,
-        issues: generateIssues(),
-        crawledAt: new Date().toISOString()
+      const response = await fetch(apiUrl)
+      
+      if (!response.ok) {
+        throw new Error(`Fehler: ${response.status}`)
       }
+
+      const data = await response.json()
       
-      const newResults = [mockResult, ...results].slice(0, 20)
+      // Extraire les scores
+      const lighthouse = data.lighthouseResult
+      const categories = lighthouse.categories
+
+      // Extraire les métriques de performance
+      const audits = lighthouse.audits
+
+      // Extraire les problèmes SEO
+      const seoAudits = Object.values(lighthouse.audits).filter((audit: any) => 
+        audit.score !== null && audit.score < 1 && 
+        (lighthouse.categories.seo?.auditRefs?.some((ref: any) => ref.id === audit.id))
+      )
+
+      const issues: SEOIssue[] = seoAudits.map((audit: any) => ({
+        title: audit.title,
+        description: audit.description,
+        severity: audit.score === 0 ? 'high' : audit.score < 0.5 ? 'medium' : 'low'
+      }))
+
+      // Extraire les opportunités d'optimisation
+      const opportunities: Opportunity[] = Object.values(audits)
+        .filter((audit: any) => audit.details?.type === 'opportunity' && audit.score !== null && audit.score < 0.9)
+        .map((audit: any) => ({
+          title: audit.title,
+          description: audit.description,
+          savings: audit.displayValue || ''
+        }))
+        .slice(0, 10)
+
+      // Extraire les diagnostics
+      const diagnostics: Diagnostic[] = Object.values(audits)
+        .filter((audit: any) => audit.details?.type === 'table' && audit.score !== null && audit.score < 0.9)
+        .map((audit: any) => ({
+          title: audit.title,
+          description: audit.description,
+          displayValue: audit.displayValue
+        }))
+        .slice(0, 10)
+
+      const result: PageSpeedResult = {
+        url: validUrl,
+        score: Math.round((categories.performance?.score || 0) * 100),
+        performanceScore: Math.round((categories.performance?.score || 0) * 100),
+        seoScore: Math.round((categories.seo?.score || 0) * 100),
+        accessibilityScore: Math.round((categories.accessibility?.score || 0) * 100),
+        bestPracticesScore: Math.round((categories['best-practices']?.score || 0) * 100),
+        fcp: audits['first-contentful-paint']?.displayValue || 'N/A',
+        lcp: audits['largest-contentful-paint']?.displayValue || 'N/A',
+        cls: audits['cumulative-layout-shift']?.displayValue || 'N/A',
+        tbt: audits['total-blocking-time']?.displayValue || 'N/A',
+        speedIndex: audits['speed-index']?.displayValue || 'N/A',
+        issues,
+        opportunities,
+        diagnostics,
+        timestamp: new Date()
+      }
+
+      const newResults = [result, ...results].slice(0, 10)
       setResults(newResults)
-      localStorage.setItem('seo_crawls', JSON.stringify(newResults))
-      toast.success('Analyse terminée !')
-      setUrl('')
-    } catch (error) {
-      toast.error('Erreur lors de l\'analyse')
+      localStorage.setItem('pagespeed_results', JSON.stringify(newResults))
+
+    } catch (err: any) {
+      console.error('PageSpeed API Fehler:', err)
+      setError(`Analyse fehlgeschlagen: ${err.message}. Bitte überprüfen Sie die URL.`)
     } finally {
       setLoading(false)
     }
   }
 
-  const generateIssues = () => {
-    const allIssues = [
-      'Meta description trop courte',
-      'Balise H1 manquante',
-      'Images sans attribut alt',
-      'Temps de chargement élevé',
-      'Pas de sitemap.xml',
-      'Robots.txt manquant',
-      'Liens cassés détectés',
-      'Contenu dupliqué possible',
-      'HTTPS non configuré',
-      'Mobile non optimisé'
-    ]
-    return allIssues.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 1)
-  }
-
   const analyzeKeyword = () => {
     if (!keywordInput) return
-    
+
     const newKeyword: Keyword = {
       term: keywordInput,
       volume: Math.floor(Math.random() * 50000) + 1000,
       difficulty: Math.floor(Math.random() * 100),
-      cpc: parseFloat((Math.random() * 5 + 0.5).toFixed(2)),
-      trend: Array.from({ length: 12 }, () => Math.floor(Math.random() * 100))
+      cpc: parseFloat((Math.random() * 5 + 0.5).toFixed(2))
     }
-    
-    const newKeywords = [newKeyword, ...keywords].slice(0, 50)
+
+    const newKeywords = [newKeyword, ...keywords].slice(0, 20)
     setKeywords(newKeywords)
     localStorage.setItem('seo_keywords', JSON.stringify(newKeywords))
-    toast.success(`Mot-clé "${keywordInput}" analysé !`)
     setKeywordInput('')
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return '#10b981'
-    if (score >= 60) return '#f59e0b'
+    if (score >= 90) return '#10b981'
+    if (score >= 50) return '#f59e0b'
     return '#ef4444'
   }
 
-  const getDifficultyLabel = (diff: number) => {
-    if (diff < 30) return { label: 'Facile', color: '#10b981' }
-    if (diff < 60) return { label: 'Moyen', color: '#f59e0b' }
-    return { label: 'Difficile', color: '#ef4444' }
+  const getScoreLabel = (score: number) => {
+    if (score >= 90) return 'Gut'
+    if (score >= 50) return 'Verbesserungsbedarf'
+    return 'Schlecht'
   }
 
+  const latestResult = results[0]
+
   return (
-    <div className="seo-module">
-      <h1>🕷️ SEO Analyzer</h1>
-      <p className="subtitle">Analysez et optimisez votre référencement</p>
+    <div className="seo-container">
+      <h1>🔍 SEO Analyzer Pro</h1>
+      <p className="powered-by">Powered by Google PageSpeed Insights API</p>
 
-      {/* Stats Overview */}
-      <div className="seo-stats">
-        <div className="seo-stat-card">
-          <span className="seo-stat-icon">🔍</span>
-          <div>
-            <div className="seo-stat-value">{results.length}</div>
-            <div className="seo-stat-label">Pages analysées</div>
-          </div>
-        </div>
-        <div className="seo-stat-card">
-          <span className="seo-stat-icon">🎯</span>
-          <div>
-            <div className="seo-stat-value">{keywords.length}</div>
-            <div className="seo-stat-label">Mots-clés suivis</div>
-          </div>
-        </div>
-        <div className="seo-stat-card">
-          <span className="seo-stat-icon">📊</span>
-          <div>
-            <div className="seo-stat-value">
-              {results.length > 0 ? Math.round(results.reduce((a, b) => a + b.score, 0) / results.length) : 0}
-            </div>
-            <div className="seo-stat-label">Score moyen</div>
-          </div>
-        </div>
-        <div className="seo-stat-card">
-          <span className="seo-stat-icon">⚠️</span>
-          <div>
-            <div className="seo-stat-value">
-              {results.reduce((a, b) => a + b.issues.length, 0)}
-            </div>
-            <div className="seo-stat-label">Problèmes détectés</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="seo-tabs">
-        <button 
-          className={`seo-tab ${activeTab === 'crawler' ? 'active' : ''}`}
-          onClick={() => setActiveTab('crawler')}
+      {/* URL Input */}
+      <div className="url-input-section">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://beispiel.com"
+          className="url-input"
+          onKeyPress={(e) => e.key === 'Enter' && analyzeUrl()}
+        />
+        <select 
+          value={strategy} 
+          onChange={(e) => setStrategy(e.target.value as 'mobile' | 'desktop')}
+          className="strategy-select"
         >
-          🕷️ Crawler
-        </button>
-        <button 
-          className={`seo-tab ${activeTab === 'keywords' ? 'active' : ''}`}
-          onClick={() => setActiveTab('keywords')}
+          <option value="mobile">📱 Mobil</option>
+          <option value="desktop">🖥️ Desktop</option>
+        </select>
+        <button
+          onClick={analyzeUrl}
+          disabled={loading || !url}
+          className="analyze-button"
         >
-          🎯 Mots-clés
-        </button>
-        <button 
-          className={`seo-tab ${activeTab === 'backlinks' ? 'active' : ''}`}
-          onClick={() => setActiveTab('backlinks')}
-        >
-          🔗 Backlinks
-        </button>
-        <button 
-          className={`seo-tab ${activeTab === 'audit' ? 'active' : ''}`}
-          onClick={() => setActiveTab('audit')}
-        >
-          📋 Audit
+          {loading ? '⏳ Analyse läuft...' : '🔍 Analysieren'}
         </button>
       </div>
 
-      {/* Crawler Tab */}
-      {activeTab === 'crawler' && (
-        <div className="seo-content">
-          <div className="crawler-input">
-            <input
-              type="url"
-              placeholder="https://exemple.com"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && crawlUrl()}
-            />
-            <button onClick={crawlUrl} disabled={loading || !url}>
-              {loading ? '⏳ Analyse...' : '🔍 Analyser'}
-            </button>
-          </div>
-
-          <div className="crawl-results">
-            {results.map((result, i) => (
-              <div key={i} className="crawl-card">
-                <div className="crawl-header">
-                  <div className="crawl-url">{result.url}</div>
-                  <div 
-                    className="crawl-score"
-                    style={{ backgroundColor: getScoreColor(result.score) }}
-                  >
-                    {result.score}/100
-                  </div>
-                </div>
-                <div className="crawl-meta">
-                  <div><strong>Title:</strong> {result.title}</div>
-                  <div><strong>Description:</strong> {result.description}</div>
-                </div>
-                <div className="crawl-stats">
-                  <span>📝 {result.wordCount} mots</span>
-                  <span>🖼️ {result.imageCount} images</span>
-                  <span>🔗 {result.linkCount} liens</span>
-                  <span>📑 {result.h1.length} H1, {result.h2.length} H2</span>
-                </div>
-                {result.issues.length > 0 && (
-                  <div className="crawl-issues">
-                    <strong>⚠️ Problèmes:</strong>
-                    <ul>
-                      {result.issues.map((issue, j) => (
-                        <li key={j}>{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="crawl-date">
-                  Analysé le {new Date(result.crawledAt).toLocaleString('fr-FR')}
-                </div>
-              </div>
-            ))}
-            {results.length === 0 && (
-              <div className="empty-state">
-                <span>🕷️</span>
-                <p>Aucune page analysée. Entrez une URL pour commencer.</p>
-              </div>
-            )}
-          </div>
+      {/* Error Message */}
+      {error && (
+        <div className="error-message">
+          ⚠️ {error}
         </div>
       )}
 
-      {/* Keywords Tab */}
-      {activeTab === 'keywords' && (
-        <div className="seo-content">
-          <div className="crawler-input">
-            <input
-              type="text"
-              placeholder="Entrez un mot-clé..."
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && analyzeKeyword()}
-            />
-            <button onClick={analyzeKeyword} disabled={!keywordInput}>
-              🎯 Analyser
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="loading-indicator">
+          <div className="spinner"></div>
+          <p>Google PageSpeed analysiert Ihre Website...</p>
+          <p className="loading-note">Dies kann 30-60 Sekunden dauern</p>
+        </div>
+      )}
+
+      {/* Results */}
+      {latestResult && !loading && (
+        <>
+          {/* Score Cards */}
+          <div className="score-cards">
+            <div className="score-card" style={{ borderColor: getScoreColor(latestResult.performanceScore) }}>
+              <div className="score-value" style={{ color: getScoreColor(latestResult.performanceScore) }}>
+                {latestResult.performanceScore}
+              </div>
+              <div className="score-label">Performance</div>
+            </div>
+            <div className="score-card" style={{ borderColor: getScoreColor(latestResult.seoScore) }}>
+              <div className="score-value" style={{ color: getScoreColor(latestResult.seoScore) }}>
+                {latestResult.seoScore}
+              </div>
+              <div className="score-label">SEO</div>
+            </div>
+            <div className="score-card" style={{ borderColor: getScoreColor(latestResult.accessibilityScore) }}>
+              <div className="score-value" style={{ color: getScoreColor(latestResult.accessibilityScore) }}>
+                {latestResult.accessibilityScore}
+              </div>
+              <div className="score-label">Barrierefreiheit</div>
+            </div>
+            <div className="score-card" style={{ borderColor: getScoreColor(latestResult.bestPracticesScore) }}>
+              <div className="score-value" style={{ color: getScoreColor(latestResult.bestPracticesScore) }}>
+                {latestResult.bestPracticesScore}
+              </div>
+              <div className="score-label">Best Practices</div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="tabs-container">
+            <button
+              className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              📊 Übersicht
+            </button>
+            <button
+              className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
+              onClick={() => setActiveTab('performance')}
+            >
+              ⚡ Performance
+            </button>
+            <button
+              className={`tab ${activeTab === 'seo' ? 'active' : ''}`}
+              onClick={() => setActiveTab('seo')}
+            >
+              🔍 SEO ({latestResult.issues.length})
+            </button>
+            <button
+              className={`tab ${activeTab === 'opportunities' ? 'active' : ''}`}
+              onClick={() => setActiveTab('opportunities')}
+            >
+              💡 Optimierungen ({latestResult.opportunities.length})
             </button>
           </div>
 
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <div className="result-card">
+              <div className="result-header">
+                <a href={latestResult.url} target="_blank" rel="noopener noreferrer">
+                  {latestResult.url}
+                </a>
+                <span className="timestamp">
+                  {new Date(latestResult.timestamp).toLocaleString('de-DE')}
+                </span>
+              </div>
+
+              <div className="metrics-grid">
+                <div className="metric-item">
+                  <span className="metric-label">First Contentful Paint</span>
+                  <span className="metric-value">{latestResult.fcp}</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-label">Largest Contentful Paint</span>
+                  <span className="metric-value">{latestResult.lcp}</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-label">Cumulative Layout Shift</span>
+                  <span className="metric-value">{latestResult.cls}</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-label">Total Blocking Time</span>
+                  <span className="metric-value">{latestResult.tbt}</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-label">Speed Index</span>
+                  <span className="metric-value">{latestResult.speedIndex}</span>
+                </div>
+              </div>
+
+              <div className="score-summary">
+                <h4>📈 Zusammenfassung</h4>
+                <p>
+                  Ihre Website hat einen Performance-Score von{' '}
+                  <strong style={{ color: getScoreColor(latestResult.performanceScore) }}>
+                    {latestResult.performanceScore}/100
+                  </strong>{' '}
+                  ({getScoreLabel(latestResult.performanceScore)}) und einen SEO-Score von{' '}
+                  <strong style={{ color: getScoreColor(latestResult.seoScore) }}>
+                    {latestResult.seoScore}/100
+                  </strong>{' '}
+                  ({getScoreLabel(latestResult.seoScore)}).
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Performance Tab */}
+          {activeTab === 'performance' && (
+            <div className="result-card">
+              <h3>⚡ Core Web Vitals</h3>
+              
+              <div className="vitals-grid">
+                <div className="vital-item">
+                  <div className="vital-header">
+                    <span className="vital-name">LCP</span>
+                    <span className="vital-full">Largest Contentful Paint</span>
+                  </div>
+                  <div className="vital-value">{latestResult.lcp}</div>
+                  <div className="vital-desc">Misst die Ladeleistung. Sollte unter 2,5s sein.</div>
+                </div>
+                
+                <div className="vital-item">
+                  <div className="vital-header">
+                    <span className="vital-name">FCP</span>
+                    <span className="vital-full">First Contentful Paint</span>
+                  </div>
+                  <div className="vital-value">{latestResult.fcp}</div>
+                  <div className="vital-desc">Zeit bis zum ersten Inhalt. Sollte unter 1,8s sein.</div>
+                </div>
+                
+                <div className="vital-item">
+                  <div className="vital-header">
+                    <span className="vital-name">CLS</span>
+                    <span className="vital-full">Cumulative Layout Shift</span>
+                  </div>
+                  <div className="vital-value">{latestResult.cls}</div>
+                  <div className="vital-desc">Misst visuelle Stabilität. Sollte unter 0,1 sein.</div>
+                </div>
+                
+                <div className="vital-item">
+                  <div className="vital-header">
+                    <span className="vital-name">TBT</span>
+                    <span className="vital-full">Total Blocking Time</span>
+                  </div>
+                  <div className="vital-value">{latestResult.tbt}</div>
+                  <div className="vital-desc">Misst Interaktivität. Sollte unter 200ms sein.</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SEO Tab */}
+          {activeTab === 'seo' && (
+            <div className="result-card">
+              <h3>🔍 SEO-Probleme</h3>
+              
+              {latestResult.issues.length === 0 ? (
+                <div className="no-issues">
+                  ✅ Keine SEO-Probleme gefunden! Ihre Website ist gut optimiert.
+                </div>
+              ) : (
+                <div className="issues-list">
+                  {latestResult.issues.map((issue, i) => (
+                    <div key={i} className={`issue-item severity-${issue.severity}`}>
+                      <div className="issue-header">
+                        <span className={`severity-badge ${issue.severity}`}>
+                          {issue.severity === 'high' ? '🔴 Hoch' : 
+                           issue.severity === 'medium' ? '🟡 Mittel' : '🟢 Niedrig'}
+                        </span>
+                      </div>
+                      <h4>{issue.title}</h4>
+                      <p>{issue.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Opportunities Tab */}
+          {activeTab === 'opportunities' && (
+            <div className="result-card">
+              <h3>💡 Optimierungsmöglichkeiten</h3>
+              
+              {latestResult.opportunities.length === 0 ? (
+                <div className="no-issues">
+                  ✅ Keine weiteren Optimierungen gefunden!
+                </div>
+              ) : (
+                <div className="opportunities-list">
+                  {latestResult.opportunities.map((opp, i) => (
+                    <div key={i} className="opportunity-item">
+                      <div className="opp-header">
+                        <h4>{opp.title}</h4>
+                        {opp.savings && (
+                          <span className="savings-badge">⏱️ {opp.savings}</span>
+                        )}
+                      </div>
+                      <p>{opp.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {latestResult.diagnostics.length > 0 && (
+                <>
+                  <h3 style={{ marginTop: '30px' }}>🔧 Diagnostik</h3>
+                  <div className="diagnostics-list">
+                    {latestResult.diagnostics.map((diag, i) => (
+                      <div key={i} className="diagnostic-item">
+                        <h4>{diag.title}</h4>
+                        {diag.displayValue && (
+                          <span className="diag-value">{diag.displayValue}</span>
+                        )}
+                        <p>{diag.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Keyword Research Section */}
+      <div className="keyword-section">
+        <h2>🔑 Keyword-Recherche</h2>
+        <div className="keyword-input-row">
+          <input
+            type="text"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            placeholder="Keyword eingeben..."
+            className="keyword-input"
+            onKeyPress={(e) => e.key === 'Enter' && analyzeKeyword()}
+          />
+          <button onClick={analyzeKeyword} className="analyze-button">
+            Analysieren
+          </button>
+        </div>
+
+        {keywords.length > 0 && (
           <div className="keywords-table">
             <table>
               <thead>
                 <tr>
-                  <th>Mot-clé</th>
-                  <th>Volume</th>
-                  <th>Difficulté</th>
+                  <th>Keyword</th>
+                  <th>Volumen</th>
+                  <th>Schwierigkeit</th>
                   <th>CPC</th>
-                  <th>Tendance</th>
                 </tr>
               </thead>
               <tbody>
-                {keywords.map((kw, i) => {
-                  const diff = getDifficultyLabel(kw.difficulty)
-                  return (
-                    <tr key={i}>
-                      <td className="kw-term">{kw.term}</td>
-                      <td>{kw.volume.toLocaleString()}</td>
-                      <td>
-                        <span className="difficulty-badge" style={{ backgroundColor: diff.color }}>
-                          {kw.difficulty}% - {diff.label}
-                        </span>
-                      </td>
-                      <td>{kw.cpc.toFixed(2)} €</td>
-                      <td>
-                        <div className="mini-trend">
-                          {kw.trend.map((v, j) => (
-                            <div 
-                              key={j} 
-                              className="trend-bar" 
-                              style={{ height: `${v}%` }}
-                            />
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
+                {keywords.map((kw, i) => (
+                  <tr key={i}>
+                    <td>{kw.term}</td>
+                    <td>{kw.volume.toLocaleString()}</td>
+                    <td>
+                      <div className="difficulty-bar">
+                        <div
+                          className="difficulty-fill"
+                          style={{
+                            width: `${kw.difficulty}%`,
+                            backgroundColor: kw.difficulty > 70 ? '#ef4444' :
+                              kw.difficulty > 40 ? '#f59e0b' : '#10b981'
+                          }}
+                        />
+                      </div>
+                      {kw.difficulty}%
+                    </td>
+                    <td>{kw.cpc}€</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-            {keywords.length === 0 && (
-              <div className="empty-state">
-                <span>🎯</span>
-                <p>Aucun mot-clé analysé. Commencez votre recherche.</p>
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Backlinks Tab */}
-      {activeTab === 'backlinks' && (
-        <div className="seo-content">
-          <div className="backlinks-overview">
-            <div className="backlink-stat">
-              <div className="backlink-value">247</div>
-              <div className="backlink-label">Total Backlinks</div>
-            </div>
-            <div className="backlink-stat">
-              <div className="backlink-value">45</div>
-              <div className="backlink-label">Domaines référents</div>
-            </div>
-            <div className="backlink-stat">
-              <div className="backlink-value">68</div>
-              <div className="backlink-label">Domain Authority</div>
-            </div>
-            <div className="backlink-stat">
-              <div className="backlink-value">12</div>
-              <div className="backlink-label">Liens cassés</div>
-            </div>
-          </div>
-
-          <div className="backlinks-list">
-            <h3>🔗 Backlinks récents</h3>
-            {[
-              { source: 'blog-velo.fr', target: '/guide-velo-electrique', da: 45, type: 'DoFollow' },
-              { source: 'cyclisme-magazine.com', target: '/comparatif-batteries', da: 62, type: 'DoFollow' },
-              { source: 'forum-ebike.net', target: '/', da: 28, type: 'NoFollow' },
-              { source: 'annuaire-velo.com', target: '/', da: 15, type: 'DoFollow' },
-              { source: 'wikipedia.org', target: '/histoire-velo', da: 95, type: 'NoFollow' },
-            ].map((bl, i) => (
-              <div key={i} className="backlink-item">
-                <div className="backlink-source">
-                  <span className="backlink-domain">{bl.source}</span>
-                  <span className="backlink-da">DA: {bl.da}</span>
-                </div>
-                <div className="backlink-target">→ {bl.target}</div>
-                <span className={`backlink-type ${bl.type.toLowerCase()}`}>{bl.type}</span>
+      {/* History Section */}
+      {results.length > 1 && (
+        <div className="history-section">
+          <h2>📜 Analyse-Verlauf</h2>
+          <div className="history-list">
+            {results.slice(1).map((result, i) => (
+              <div key={i} className="history-item" onClick={() => {
+                setResults([result, ...results.filter(r => r !== result)])
+              }}>
+                <span className="history-url">{result.url}</span>
+                <span className="history-score" style={{ color: getScoreColor(result.performanceScore) }}>
+                  {result.performanceScore}/100
+                </span>
+                <span className="history-date">
+                  {new Date(result.timestamp).toLocaleDateString('de-DE')}
+                </span>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Audit Tab */}
-      {activeTab === 'audit' && (
-        <div className="seo-content">
-          <div className="audit-score">
-            <div className="audit-circle" style={{ '--score': 73 } as React.CSSProperties}>
-              <span>73</span>
-            </div>
-            <div className="audit-label">Score SEO Global</div>
-          </div>
-
-          <div className="audit-categories">
-            <div className="audit-category">
-              <div className="audit-cat-header">
-                <span>📱 Mobile</span>
-                <span className="audit-cat-score good">92/100</span>
-              </div>
-              <div className="audit-bar">
-                <div className="audit-progress" style={{ width: '92%', backgroundColor: '#10b981' }}></div>
-              </div>
-            </div>
-            <div className="audit-category">
-              <div className="audit-cat-header">
-                <span>⚡ Performance</span>
-                <span className="audit-cat-score medium">67/100</span>
-              </div>
-              <div className="audit-bar">
-                <div className="audit-progress" style={{ width: '67%', backgroundColor: '#f59e0b' }}></div>
-              </div>
-            </div>
-            <div className="audit-category">
-              <div className="audit-cat-header">
-                <span>🔒 Sécurité</span>
-                <span className="audit-cat-score good">100/100</span>
-              </div>
-              <div className="audit-bar">
-                <div className="audit-progress" style={{ width: '100%', backgroundColor: '#10b981' }}></div>
-              </div>
-            </div>
-            <div className="audit-category">
-              <div className="audit-cat-header">
-                <span>📝 Contenu</span>
-                <span className="audit-cat-score medium">58/100</span>
-              </div>
-              <div className="audit-bar">
-                <div className="audit-progress" style={{ width: '58%', backgroundColor: '#f59e0b' }}></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="audit-recommendations">
-            <h3>📋 Recommandations prioritaires</h3>
-            <div className="recommendation high">
-              <span className="rec-priority">Haute</span>
-              <span className="rec-text">Optimiser les images (compression WebP)</span>
-            </div>
-            <div className="recommendation high">
-              <span className="rec-priority">Haute</span>
-              <span className="rec-text">Ajouter des meta descriptions uniques</span>
-            </div>
-            <div className="recommendation medium">
-              <span className="rec-priority">Moyenne</span>
-              <span className="rec-text">Améliorer le maillage interne</span>
-            </div>
-            <div className="recommendation low">
-              <span className="rec-priority">Basse</span>
-              <span className="rec-text">Ajouter un fil d'Ariane</span>
-            </div>
           </div>
         </div>
       )}
