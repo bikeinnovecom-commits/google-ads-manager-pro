@@ -11,10 +11,12 @@ import Images from './components/Images'
 import Pages from './components/Pages'
 import Collections from './components/Collections'
 import Blog from './components/Blog'
-import PageSpeedAnalyzer from './components/PageSpeedAnalyzer'
+import PageSpeedAnalyzer from './components/PageSpeedAnalyzer';
+import ImageCompressor from './components/ImageCompressor';
+// imported from './components/PageSpeedAnalyzer'
 import Sidebar from './components/Sidebar'
 
-type View = 'dashboard' | 'campaigns' | 'seo' | 'shopify-seo' | 'images' | 'pages' | 'collections' | 'blog' | 'pagespeed'
+type View = 'dashboard' | 'campaigns' | 'seo' | 'shopify-seo' | 'images' | 'pages' | 'collections' | 'blog' | 'pagespeed' | 'compressor'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
@@ -63,7 +65,7 @@ function App() {
         {currentView === 'pages' && <Pages />}
         {currentView === 'collections' && <Collections />}
         {currentView === 'blog' && <Blog />}
-              {currentView === 'pagespeed' && <PageSpeedAnalyzer />}
+              {currentView === 'pagespeed' | 'compressor' && <PageSpeedAnalyzer />}
       </main>
     </div>
   )

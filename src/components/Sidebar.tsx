@@ -17,6 +17,7 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
     { id: 'collections', label: 'Collections', icon: '📁' },
     { id: 'blog', label: 'Blog', icon: '✍️' },
     { id: 'pagespeed', label: 'PageSpeed', icon: '🚀' },
+    { id: 'compressor', label: 'Compresseur', icon: '🗜️' },
   ]
 
   const handleLogout = async () => {

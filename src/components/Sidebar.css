@@ -1,0 +1,12 @@
+
+.sidebar nav {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+
+/* Enable scrolling in sidebar */
+.sidebar {
+  overflow-y: auto !important;
+  height: 100vh !important;
+}
