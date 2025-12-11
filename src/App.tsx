@@ -11,9 +11,10 @@ import Images from './components/Images'
 import Pages from './components/Pages'
 import Collections from './components/Collections'
 import Blog from './components/Blog'
+import PageSpeedAnalyzer from './components/PageSpeedAnalyzer'
 import Sidebar from './components/Sidebar'
 
-type View = 'dashboard' | 'campaigns' | 'seo' | 'shopify-seo' | 'images' | 'pages' | 'collections' | 'blog'
+type View = 'dashboard' | 'campaigns' | 'seo' | 'shopify-seo' | 'images' | 'pages' | 'collections' | 'blog' | 'pagespeed'
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard')
@@ -62,6 +63,7 @@ function App() {
         {currentView === 'pages' && <Pages />}
         {currentView === 'collections' && <Collections />}
         {currentView === 'blog' && <Blog />}
+              {currentView === 'pagespeed' && <PageSpeedAnalyzer />}
       </main>
     </div>
   )
