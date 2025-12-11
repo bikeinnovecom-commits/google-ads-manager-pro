@@ -65,7 +65,8 @@ function App() {
         {currentView === 'pages' && <Pages />}
         {currentView === 'collections' && <Collections />}
         {currentView === 'blog' && <Blog />}
-              {currentView === 'pagespeed' | 'compressor' && <PageSpeedAnalyzer />}
+              {currentView === 'pagespeed' && <PageSpeedAnalyzer />}
+        {currentView === 'compressor' && <ImageCompressor />}
       </main>
     </div>
   )
