@@ -132,7 +132,7 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .list-header {
@@ -170,7 +170,7 @@
   width: 60px;
   height: 60px;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   background: #f3f4f6;
 }
 
