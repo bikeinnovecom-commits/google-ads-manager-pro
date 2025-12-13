@@ -1,5 +1,6 @@
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import './Sidebar.css'
 
 interface SidebarProps {
   currentView: string
@@ -10,14 +11,15 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'campaigns', label: 'Campagnes', icon: '🎯' },
-    { id: 'shopify-seo', label: 'Shopify SEO', icon: '🛍️' },
-    { id: 'seo', label: 'SEO Analyzer', icon: '🕷️' },
+    { id: 'shopify-seo', label: 'Shopify SEO', icon: '🛒' },
+    { id: 'seo', label: 'SEO Analyzer', icon: '🔍' },
     { id: 'images', label: 'Images', icon: '🖼️' },
     { id: 'pages', label: 'Pages', icon: '📄' },
     { id: 'collections', label: 'Collections', icon: '📁' },
     { id: 'blog', label: 'Blog', icon: '✍️' },
     { id: 'pagespeed', label: 'PageSpeed', icon: '🚀' },
-    { id: 'compressor', label: 'Compresseur', icon: '🗜️' },
+    { id: 'compressor', label: 'Compresseur', icon: '🔄' },
+    { id: 'image-optimizer', label: 'Bildoptimierung', icon: '🖼️' },
   ]
 
   const handleLogout = async () => {
