@@ -287,3 +287,12 @@
     text-align: left;
   }
 }
+
+.products-list {
+}
+
+.image-optimizer {
+  overflow-y: auto;
+  padding-bottom: 100px;
+}
+
