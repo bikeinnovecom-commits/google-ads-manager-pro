@@ -1109,3 +1109,13 @@ tr:not(:last-child) td { border-bottom: 1px solid #2a2a34; }
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+html, body, #root {
+  height: 100%;
+  overflow: auto;
+}
+
+.app-container {
+  min-height: 100vh;
+}
+
