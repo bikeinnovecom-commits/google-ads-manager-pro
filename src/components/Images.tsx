@@ -54,8 +54,8 @@ export default function Images() {
   })
 
   // Shopify API Configuration
-  const SHOPIFY_STORE = process.env.SHOPIFY_STORE || '';
-  const ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || '';
+  const SHOPIFY_STORE = import.meta.env.VITE_SHOPIFY_STORE || '';
+  const ACCESS_TOKEN = import.meta.env.VITE_SHOPIFY_ACCESS_TOKEN || '';
 
   useEffect(() => {
     loadProducts()
