@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import './Images.css'
-
+import PerformanceOptimizer from './PerformanceOptimizer';
 interface ShopifyProduct {
   id: number
   title: string
