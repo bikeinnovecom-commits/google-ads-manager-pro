@@ -426,7 +426,12 @@ export default function Images() {
         >
           ⚙️ Einstellungen
         </button>
-      </div>
+        <button
+            className={`tab ${activeTab === 'optimizer' ? 'active' : ''}`}
+            onClick={() => setActiveTab('optimizer')}
+          >
+            ⚡ Performance
+          </button>      </div>
 
       {/* Loading State */}
       {loading && (
@@ -716,7 +721,8 @@ export default function Images() {
             </div>
           </div>
         </div>
-      )}
+      )}{/* Tab: Performance Optimizer */}
+      {activeTab === 'optimizer' && <PerformanceOptimizer />}
     </div>
   )
 }
