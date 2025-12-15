@@ -1,0 +1,3 @@
+const response = await fetch('/api/shopify-products')
+
+if (!response.ok) throw new Error('Fehler beim Laden der Produkte')

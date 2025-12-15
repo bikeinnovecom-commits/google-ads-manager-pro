@@ -64,17 +64,7 @@ export default function Images() {
   const loadProducts = async () => {
     setLoading(true)
     try {
-      const response = await fetch(
-        `https://${SHOPIFY_STORE}/admin/api/2024-01/products.json?limit=250`,
-        {
-          headers: {
-            'X-Shopify-Access-Token': ACCESS_TOKEN,
-            'Content-Type': 'application/json'
-          }
-        }
-      )
-
-      if (!response.ok) throw new Error('Fehler beim Laden der Produkte')
+    const response = await fetch("/api/shopify-products")
 
       const data = await response.json()
       setProducts(data.products)
