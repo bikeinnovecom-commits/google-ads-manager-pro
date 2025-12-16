@@ -427,7 +427,7 @@ export default function Images() {
               }`}
             >
               ⚡ Performance
-            </button>        </button>
+            </button>
       </div>
 
       {/* Loading State */}
@@ -667,7 +667,7 @@ export default function Images() {
 
       {/* Settings Tab */}
       {activeTab === 'settings' && !loading && (
-          {activeTab === "performance" && <PerformanceOptimizer />}        <div className="tab-content">
+        <div className="tab-content">
           <div className="settings-section">
             <h3>⚙️ Einstellungen</h3>
             <button
