@@ -419,12 +419,8 @@ export default function Images() {
         >
           ⚙️ Einstellungen
             <button
-              onClick={() => setActiveTab("performance")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === "performance"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
+              onClick={() => setActiveTab('performance')}
             >
               ⚡ Performance
             </button>
@@ -671,12 +667,8 @@ export default function Images() {
           <div className="settings-section">
             <h3>⚙️ Einstellungen</h3>
             <button
-              onClick={() => setActiveTab("performance")}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeTab === "performance"
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
+              onClick={() => setActiveTab('performance')}
             >
               ⚡ Performance
             </button>
