@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import './Images.css'
+
 interface ShopifyProduct {
   id: number
   title: string
@@ -63,7 +64,10 @@ export default function Images() {
   const loadProducts = async () => {
     setLoading(true)
     try {
-    const response = await fetch("/api/shopify");
+      const response = await fetch("/api/shopify-products")
+
+      if (!response.ok) throw new Error('Fehler beim Laden der Produkte')
+
       const data = await response.json()
       setProducts(data.products)
 
@@ -146,6 +150,7 @@ export default function Images() {
 
             // Update via Shopify API
             try {
+              const response = await fetch(
                 `https://${SHOPIFY_STORE}/admin/api/2024-01/products/${product.id}/images/${image.id}.json`,
                 {
                   method: 'PUT',
@@ -160,6 +165,7 @@ export default function Images() {
                     }
                   })
                 }
+              )
 
               if (response.ok) {
                 results[results.length - 1].status = 'success'
@@ -412,12 +418,7 @@ export default function Images() {
         >
           ⚙️ Einstellungen
         </button>
-        <button
-            className={`tab ${activeTab === 'optimizer' ? 'active' : ''}`}
-            onClick={() => setActiveTab('optimizer')}
-          >
-            ⚡ Performance
-          </button>      </div>
+      </div>
 
       {/* Loading State */}
       {loading && (
@@ -707,7 +708,7 @@ export default function Images() {
             </div>
           </div>
         </div>
-      )}{/* Tab: Performance Optimizer */}
+      )}
     </div>
   )
 }
