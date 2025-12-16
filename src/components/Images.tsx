@@ -417,7 +417,16 @@ export default function Images() {
           onClick={() => setActiveTab('settings')}
         >
           ⚙️ Einstellungen
-        </button>
+            <button
+              onClick={() => setActiveTab("performance")}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeTab === "performance"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              ⚡ Performance
+            </button>        </button>
       </div>
 
       {/* Loading State */}
@@ -660,7 +669,16 @@ export default function Images() {
         <div className="tab-content">
           <div className="settings-section">
             <h3>⚙️ Einstellungen</h3>
-
+            <button
+              onClick={() => setActiveTab("performance")}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeTab === "performance"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              ⚡ Performance
+            </button>
             <div className="settings-card">
               <h4>Alt-Text-Muster</h4>
               <p>Die Alt-Texte werden automatisch nach folgendem Muster generiert:</p>
