@@ -63,7 +63,6 @@ export default function Images() {
   const loadProducts = async () => {
     setLoading(true)
     try {
-      const response = await fetch(
     const response = await fetch("/api/shopify");
       const data = await response.json()
       setProducts(data.products)
@@ -147,7 +146,6 @@ export default function Images() {
 
             // Update via Shopify API
             try {
-              const response = await fetch(
                 `https://${SHOPIFY_STORE}/admin/api/2024-01/products/${product.id}/images/${image.id}.json`,
                 {
                   method: 'PUT',
