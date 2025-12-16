@@ -160,7 +160,6 @@ export default function Images() {
                     }
                   })
                 }
-              )
 
               if (response.ok) {
                 results[results.length - 1].status = 'success'
