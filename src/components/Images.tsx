@@ -65,16 +65,6 @@ export default function Images() {
     try {
       const response = await fetch(
     const response = await fetch("/api/shopify");
-        {
-          headers: {
-            'X-Shopify-Access-Token': ACCESS_TOKEN,
-            'Content-Type': 'application/json'
-          }
-        }
-      )
-
-      if (!response.ok) throw new Error('Fehler beim Laden der Produkte')
-
       const data = await response.json()
       setProducts(data.products)
 
