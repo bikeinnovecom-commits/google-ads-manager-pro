@@ -418,7 +418,7 @@ export default function Images() {
           onClick={() => setActiveTab('settings')}
         >
           ⚙️ Einstellungen
-            <button
+            </button>            <button
               className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
               onClick={() => setActiveTab('performance')}
             >
