@@ -64,7 +64,7 @@ export default function Images() {
     setLoading(true)
     try {
       const response = await fetch(
-        `https://${SHOPIFY_STORE}/admin/api/2024-01/products.json?limit=250`,
+    const response = await fetch("/api/shopify");
         {
           headers: {
             'X-Shopify-Access-Token': ACCESS_TOKEN,
