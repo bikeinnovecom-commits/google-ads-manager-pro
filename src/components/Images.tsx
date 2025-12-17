@@ -666,11 +666,6 @@ export default function Images() {
         <div className="tab-content">
           <div className="settings-section">
             <h3>⚙️ Einstellungen</h3>
-            <button
-              className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
-              onClick={() => setActiveTab('performance')}
-            >
-              ⚡ Performance
             </button>
             <div className="settings-card">
               <h4>Alt-Text-Muster</h4>
