@@ -44,7 +44,7 @@ export default function Images() {
   const [products, setProducts] = useState<ShopifyProduct[]>([])
   const [loading, setLoading] = useState(false)
   const [optimizing, setOptimizing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'alt-text' | 'compression' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'alt-text' | 'compression' | 'settings' | 'performance'>('overview')
   const [altResults, setAltResults] = useState<OptimizationResult[]>([])
   const [compressionResults, setCompressionResults] = useState<CompressionResult[]>([])
   const [stats, setStats] = useState({
