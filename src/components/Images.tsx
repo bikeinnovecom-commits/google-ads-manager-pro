@@ -418,13 +418,13 @@ export default function Images() {
           onClick={() => setActiveTab('settings')}
         >
           ⚙️ Einstellungen
-            </button>            <button
+        </button>
+            <button
               className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
               onClick={() => setActiveTab('performance')}
             >
               ⚡ Performance
-            </button>
-      </div>
+            </button>      </div>
 
       {/* Loading State */}
       {loading && (
@@ -666,7 +666,7 @@ export default function Images() {
         <div className="tab-content">
           <div className="settings-section">
             <h3>⚙️ Einstellungen</h3>
-            </button>
+
             <div className="settings-card">
               <h4>Alt-Text-Muster</h4>
               <p>Die Alt-Texte werden automatisch nach folgendem Muster generiert:</p>
@@ -715,6 +715,8 @@ export default function Images() {
           </div>
         </div>
       )}
+
+          {activeTab === 'performance' && <PerformanceOptimizer />}
     </div>
   )
 }
